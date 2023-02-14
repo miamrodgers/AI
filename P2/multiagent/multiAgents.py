@@ -40,6 +40,7 @@ class ReflexAgent(Agent):
         """
         # Collect legal moves and successor states
         legalMoves = gameState.getLegalActions()
+        
 
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
@@ -80,16 +81,48 @@ class ReflexAgent(Agent):
         # minimize distance from furthest food
         # minimize number of food left
         
+        score = 0
+
         foodList = [manhattanDistance(newPos,food) for food in newFood.asList()]        
         ghostList = [manhattanDistance(newPos,ghost) for ghost in successorGameState.getGhostPositions()]
         
-        if min(ghostList) == 1:
-            return -100
+        if len(foodList)==0:
+            return 1000
+        score += 1/max(foodList)*200
+        score += 1/min(foodList)*200
+        if(newPos in currentGameState.getFood().asList()):
+            score += 1000
+        if(min(newScaredTimes) > 2):
+            score += 1/min(ghostList)*100
+        else:
+            if(min(ghostList) == 1):
+                return -1000
+            if(min(ghostList) < 3):
+                score -= 1000
+            else:
+                score += min(ghostList)
+        return score
 
-        # return successorGameState.getScore()+min(ghostList)-max(foodList) # terrible
-        # return successorGameState.getScore()+min(ghostList) # sort of okay but bad
-        # return min(ghostList)-max(foodList)-min(foodList)-len(foodList)
-        # return min(ghostList)-max(foodList) # worked decently, pretty bad though
+        # gets 3/4
+        # score = 0
+
+        # foodList = [manhattanDistance(newPos,food) for food in newFood.asList()]        
+        # ghostList = [manhattanDistance(newPos,ghost) for ghost in successorGameState.getGhostPositions()]
+        
+        # if len(foodList)==0:
+        #     return 1000
+        # score += 1/max(foodList)*200
+        # score += 1/min(foodList)*100
+        # if(newPos in currentGameState.getFood().asList()):
+        #     score += 1000
+        # if(min(newScaredTimes) > 2):
+        #     score += 1/min(ghostList)*100
+        # else:
+        #     if(min(ghostList) < 3):
+        #         score -= 1000
+        #     else:
+        #         score += min(ghostList)
+        # return score
 
 def scoreEvaluationFunction(currentGameState):
     """
