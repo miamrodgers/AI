@@ -314,7 +314,11 @@ def betterEvaluationFunction(currentGameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION: this evaluation function gives a score to a gameState based 
+    on the whether the current state is a winning or losing state, the game 
+    score, distance to nearest capsule, distance to nearest food, the remaining 
+    scare time of the ghosts and distance to the ghosts
+
     """
     "*** YOUR CODE HERE ***"
     from util import manhattanDistance
@@ -325,27 +329,22 @@ def betterEvaluationFunction(currentGameState):
     numGhosts = len(ghostStates)
     ghostPositions = [ghostState.getPosition() for ghostState in ghostStates]
     scaredTimes = [ghostState.scaredTimer for ghostState in ghostStates]
-    score = currentGameState.getScore()
 
-    # search for closest win/lose state?
+    score = currentGameState.getScore()
 
     if currentGameState.isWin():
         return 10000
     if currentGameState.isLose():
         return -10000
     for capsule in capsules:
-        if pos == capsule:
-            return 10000
         score -= manhattanDistance(pos,capsule)
         
-    foodDist = [manhattanDistance(pos,f) for f in food.asList()]
-    score -= min(foodDist)
-    # score += max(foodDist)
+    score -= min([manhattanDistance(pos,f) for f in food.asList()])
 
     for i in range(numGhosts):
         if scaredTimes[i] > 0:
-            score += 1000 # always eat ghost in scared mode
-            score += manhattanDistance(pos,ghostPositions[i])
+            score += 100
+        score += manhattanDistance(pos,ghostPositions[i])
 
     return score
     
