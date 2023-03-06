@@ -66,7 +66,7 @@ class ValueIterationAgent(ValueEstimationAgent):
         states = self.mdp.getStates()
         change = False
         count = 0
-        while (count<self.iterations) | (change == False):
+        while (count<self.iterations) & (change == False):
             prev = self.values.copy()
             for state in states:
                     action = self.computeActionFromValues(state)
