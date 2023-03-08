@@ -196,11 +196,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
           construction, run the indicated number of iterations,
           and then act according to the resulting policy.
         """
-        self.mdp = mdp
         self.theta = theta
-        self.queue = util.PriorityQueue()
-        
-        
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
 
     def runValueIteration(self):
@@ -211,10 +207,11 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
         states = self.mdp.getStates()
         validStates = [state for state in states if state is not 'TERMINAL_STATE']
         preds = {}
+        queue = util.PriorityQueue()
         for state in validStates:
             preds[state] = set()
-            self.queue.push(state,0)
-
+            # queue.push(state,0)
+        terminalP = []
         for state in validStates:    
             actions = self.mdp.getPossibleActions(state)
             for action in actions:
@@ -222,16 +219,22 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
                 for nextState in nextStates:
                     if nextState is not 'TERMINAL_STATE':
                         preds[nextState].add(state)
-        # print(preds)
-        self.preds = preds
-        self.validStates = validStates
+                    else:
+                        terminalP.append(state)
 
+        for p in terminalP:
+            queue.push(p,0)
+        # print(preds)
+        preds = preds
+
+        validStates = validStates
+        queue.push(self.mdp.getStartState(),0)
         while (count<self.iterations) & (change == False):
-            # print(*self.queue.heap,sep='\n')
-            if self.queue.isEmpty():
+            # print(*queue.heap,sep='\n')
+            if queue.isEmpty():
                 break
             prev = self.values.copy()
-            state = self.queue.pop()
+            state = queue.pop()
             if state is 'TERMINAL_STATE':
                 pass
             action = self.computeActionFromValues(state)
@@ -242,12 +245,12 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
             # print('---')
 
             self.values[state] = self.computeQValueFromValues(state,action)
-            maxQ = max([self.values[p] for p in self.preds[state]])
-            for p in self.preds[state]:
+            maxQ = max([self.values[p] for p in preds[state]])
+            for p in preds[state]:
                 diff = self.values[p]-maxQ
                 if diff>self.theta:
-                    self.queue.update(p,-diff)
-            # print(*self.queue.heap,sep='\n')
+                    queue.update(p,-diff)
+            # print(*queue.heap,sep='\n')
             
             change = prev == self.values
             count+=1
