@@ -180,7 +180,7 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
                 self.values[state] = self.computeQValueFromValues(state,action)
                 change = prev == self.values
             count += 1
-            print()
+            # print()
 
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     """
@@ -196,9 +196,62 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
           construction, run the indicated number of iterations,
           and then act according to the resulting policy.
         """
+        self.mdp = mdp
         self.theta = theta
+        self.queue = util.PriorityQueue()
+        
+        
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+        
+        change = False
+        count = 0
+        states = self.mdp.getStates()
+        validStates = [state for state in states if state is not 'TERMINAL_STATE']
+        preds = {}
+        for state in validStates:
+            preds[state] = set()
+            self.queue.push(state,0)
+
+        for state in validStates:    
+            actions = self.mdp.getPossibleActions(state)
+            for action in actions:
+                nextStates, _  = zip(*self.mdp.getTransitionStatesAndProbs(state,action))
+                for nextState in nextStates:
+                    if nextState is not 'TERMINAL_STATE':
+                        preds[nextState].add(state)
+        # print(preds)
+        self.preds = preds
+        self.validStates = validStates
+
+        while (count<self.iterations) & (change == False):
+            # print(*self.queue.heap,sep='\n')
+            if self.queue.isEmpty():
+                break
+            prev = self.values.copy()
+            state = self.queue.pop()
+            if state is 'TERMINAL_STATE':
+                pass
+            action = self.computeActionFromValues(state)
+            # print('Values:',self.values)
+            # print('State:',state)
+            # print('Action:',action)
+            
+            # print('---')
+
+            self.values[state] = self.computeQValueFromValues(state,action)
+            maxQ = max([self.values[p] for p in self.preds[state]])
+            for p in self.preds[state]:
+                diff = self.values[p]-maxQ
+                if diff>self.theta:
+                    self.queue.update(p,-diff)
+            # print(*self.queue.heap,sep='\n')
+            
+            change = prev == self.values
+            count+=1
+            
+            # print()
+
 
