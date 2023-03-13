@@ -201,61 +201,51 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
 
     def runValueIteration(self):
-        "*** YOUR CODE HERE ***"
-        
-        change = False
-        count = 0
         states = self.mdp.getStates()
-        validStates = [state for state in states if state is not 'TERMINAL_STATE']
-        preds = {}
-        queue = util.PriorityQueue()
-        for state in validStates:
-            preds[state] = set()
-            # queue.push(state,0)
-        terminalP = []
-        for state in validStates:    
+        predecessors = util.Counter()
+        pqueue = util.PriorityQueue()
+        count = 0 
+
+        for state in states:
+            predecessors[state] = set()
+        for state in states:
             actions = self.mdp.getPossibleActions(state)
             for action in actions:
-                nextStates, _  = zip(*self.mdp.getTransitionStatesAndProbs(state,action))
-                for nextState in nextStates:
-                    if nextState is not 'TERMINAL_STATE':
-                        preds[nextState].add(state)
-                    else:
-                        terminalP.append(state)
+                tstates = self.mdp.getTransitionStatesAndProbs(state, action)
+                for sa in tstates:
+                    if sa[1] > 0:
+                        predecessors[sa[0]].add(state)
+        
+        for state in states:
+            actions = self.mdp.getPossibleActions(state)
+            if state is not 'TERMINAL_STATE' and len(actions) != 0:
+                val = float('-inf')
+                for action in actions:
+                    q = self.computeQValueFromValues(state, action)
+                    if q >= val:
+                        val = q
+                diff = abs(self.values[state] - val)
+                pqueue.update(state, -diff)
 
-        for p in terminalP:
-            queue.push(p,0)
-        # print(preds)
-        preds = preds
-
-        validStates = validStates
-        queue.push(self.mdp.getStartState(),0)
-        while (count<self.iterations) & (change == False):
-            # print(*queue.heap,sep='\n')
-            if queue.isEmpty():
-                break
-            prev = self.values.copy()
-            state = queue.pop()
-            if state is 'TERMINAL_STATE':
-                pass
-            action = self.computeActionFromValues(state)
-            # print('Values:',self.values)
-            # print('State:',state)
-            # print('Action:',action)
-            
-            # print('---')
-
-            self.values[state] = self.computeQValueFromValues(state,action)
-            maxQ = max([self.values[p] for p in preds[state]])
-            for p in preds[state]:
-                diff = self.values[p]-maxQ
-                if diff>self.theta:
-                    queue.update(p,-diff)
-            # print(*queue.heap,sep='\n')
-            
-            change = prev == self.values
-            count+=1
-            
-            # print()
-
-
+        while (count < self.iterations):
+            if not pqueue.isEmpty():
+                state = pqueue.pop()
+                if state is not 'TERMINAL_STATE' and len(actions) != 0:
+                    actions = self.mdp.getPossibleActions(state)
+                    val = float('-inf')
+                    for action in actions:
+                        q = self.computeQValueFromValues(state, action)
+                        if q >= val:
+                            val = q
+                    self.values[state] = val
+                for p in predecessors[state]:
+                    actions = self.mdp.getPossibleActions(p)
+                    val = float('-inf')
+                    for action in actions:
+                        q = self.computeQValueFromValues(p, action)
+                        if q >= val:
+                            val = q
+                    diff = abs(self.values[p] - val)
+                    if diff > self.theta:
+                        pqueue.update(p, -diff)
+            count += 1
