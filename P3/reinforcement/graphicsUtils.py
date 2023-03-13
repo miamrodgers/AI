@@ -21,6 +21,7 @@ import types
 import tkinter
 import os.path
 
+
 _Windows = sys.platform == 'win32'  # True if on Win95/98/NT
 
 _root_window = None      # The root window for graphics output

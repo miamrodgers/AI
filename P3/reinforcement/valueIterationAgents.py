@@ -180,7 +180,6 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
                 self.values[state] = val
 
             count += 1
-            # print()
 
 
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
